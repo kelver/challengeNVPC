@@ -18,7 +18,7 @@
                 <!-- Replace with your content -->
                 <div class="px-4 py-6 sm:px-0">
                     <div class="rounded-lg h-auto">
-                        <CardRepository @get-repos="getRepos()" :data="this.data" />
+                        <CardRepository @get-repos="getRepos" :data="this.data" :contents="this.contents" />
                     </div>
                 </div>
                 <!-- /End replace -->
@@ -34,12 +34,15 @@ import CardRepository from '@/components/CardRepository'
 import SearchBox from '@/components/SearchBox'
 import FooterComponent from '@/components/FooterComponent'
 import axios from "axios";
+import {toRaw} from "vue";
 
 export default {
     name: 'HomeView',
     data() {
         return {
-            data: {},
+            data: [],
+            contents: {},
+            nextPage: 2
         };
     },
     components: {
@@ -51,8 +54,7 @@ export default {
         search: Object
     },
     methods: {
-        getRepos(search = {term:'', order:0, page:1}) {
-            let isSearch = false;
+        async getRepos(search = {term:'', order:0, page:1}) {
             let arrSort = {
                 0: '',
                 1: '&sort=full_name&direction=asc',
@@ -61,23 +63,53 @@ export default {
                 4: '&sort=updated&direction=asc',
             };
 
-            console.log(arrSort[search.order])
-            let url = 'https://api.github.com/users/kelver/repos?per_page=6&page=1' + arrSort[search.order];
+            let url = 'https://api.github.com/users/kelver/repos?per_page=6&page=' + search.page +
+                arrSort[search.order];
             if(search.term && search.term.length > 2){
                 this.data = {};
-                isSearch = true;
                 url = "https://api.github.com/search/repositories?q=user%3Akelver+" + search.term;
             }
 
-            axios
+            await this.getData(url, search, arrSort);
+        },
+        async getData (url, search, arrSort){
+            let isSearch = false;
+            if(search.term || search.order &&
+                (search.term !== this.contents.term || search.order !== this.contents.order)){
+                this.data = []
+            }
+            await axios
                 .get(url)
                 .then((res) => {
-                    this.data = (!isSearch) ? res.data : res.data['items'];
+                    this.data.push((!isSearch) ? res.data : res.data['items']);
+
+                    let urlTestNextPage = 'https://api.github.com/users/kelver/repos?per_page=6&page=' +
+                        (parseInt(search.page)+1) + arrSort[search.order];
+
+                    this.getNextData(urlTestNextPage, search);
                 })
                 .catch((error) => {
                     console.log(error);
                 });
         },
+        async getNextData (urlTestNextPage, search) {
+            await axios
+                .get(urlTestNextPage)
+                .then((res) => {
+                    this.nextPage = (res.data.length > 0) ? parseInt(search.page)+1 : 1;
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+
+            this.contents = {
+                term: search.term,
+                order: search.order,
+                page: search.page,
+                nextPage: this.nextPage,
+                finishPaginate: (!this.nextPage > 1),
+            };
+        }
     }
 }
 </script>

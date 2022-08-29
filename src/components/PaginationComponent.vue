@@ -1,5 +1,5 @@
 <template>
-
+    <h2 v-bind:class="[isFinished ? 'finish' : 'load-more']" @click='getPosts()' v-cloak>{{ buttonText }}</h2>
 </template>
 
 <script>

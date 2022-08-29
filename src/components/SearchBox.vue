@@ -38,9 +38,10 @@ export default {
             order: 0,
         }
     },
+    emits: ["getRepos"],
     methods: {
         search (term, order) {
-            this.$emit('getRepos', {term, order})
+            this.$emit('getRepos', {term, order, page:0})
         }
     }
 }
