@@ -97,18 +97,17 @@ export default {
                 .get(urlTestNextPage)
                 .then((res) => {
                     this.nextPage = (res.data.length > 0) ? parseInt(search.page)+1 : 1;
+
+                    this.contents = {
+                        term: search.term,
+                        order: search.order,
+                        page: search.page,
+                        nextPage: this.nextPage,
+                    };
                 })
                 .catch((error) => {
                     console.log(error);
                 });
-
-            this.contents = {
-                term: search.term,
-                order: search.order,
-                page: search.page,
-                nextPage: this.nextPage,
-                finishPaginate: (!this.nextPage > 1),
-            };
         }
     }
 }

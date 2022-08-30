@@ -35,7 +35,7 @@
     </div>
     <div class="flex items-center justify-center w-full mt-4">
         <h2 v-bind:class="[this.isFinished ? 'bg-indigo-300' : 'bg-indigo-700']"
-            @click="this.loadMore(this.page)"
+            @click="!this.isFinished ? this.loadMore(this.page) : null"
             class="text-indigo-100 transition-colors duration-150 rounded-lg
                    h-12 px-6 m-2 text-lg py-2 w-2/4 hover:border-2 border-indigo-300">{{ this.textButton }}</h2>
     </div>
@@ -125,10 +125,16 @@ export default {
     created() {
         this.$emit('getRepos')
     },
+    updated() {
+        if(this.contents.nextPage <= 1){
+            this.textButton = "Todos os repositórios já exibidos.";
+            this.isFinished = true;
+        }
+    },
     methods: {
-        loadMore() {
+        async loadMore() {
             this.page = this.contents.nextPage;
-            this.$emit('getRepos', {
+            await this.$emit('getRepos', {
                 term: this.contents.term ?? '',
                 order: this.contents.order ?? 0,
                 page: (this.nextPage ?? this.page)
