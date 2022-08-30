@@ -137,7 +137,8 @@ export default {
             await this.$emit('getRepos', {
                 term: this.contents.term ?? '',
                 order: this.contents.order ?? 0,
-                page: (this.nextPage ?? this.page)
+                page: (this.nextPage ?? this.page),
+                isSearch: false
             })
         }
     }

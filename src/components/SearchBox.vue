@@ -41,7 +41,7 @@ export default {
     emits: ["getRepos"],
     methods: {
         search (term, order) {
-            this.$emit('getRepos', {term, order, page:0})
+            this.$emit('getRepos', {term, order, page:1, isSearch: true})
         }
     }
 }

@@ -54,7 +54,7 @@ export default {
         search: Object
     },
     methods: {
-        async getRepos(search = {term:'', order:0, page:1}) {
+        async getRepos(search = {term:'', order:0, page:1, isSearch: false}) {
             let arrSort = {
                 0: '',
                 1: '&sort=full_name&direction=asc',
@@ -63,30 +63,36 @@ export default {
                 4: '&sort=updated&direction=asc',
             };
 
+            search.isSearch = (search.term && search.term.length > 2);
+
             let url = 'https://api.github.com/users/kelver/repos?per_page=6&page=' + search.page +
                 arrSort[search.order];
+
             if(search.term && search.term.length > 2){
-                this.data = {};
-                url = "https://api.github.com/search/repositories?q=user%3Akelver+" + search.term;
+                url = "https://api.github.com/search/repositories?per_page=6&page=" + search.page + "&q=user%3Akelver+"
+                    + search.term;
             }
 
             await this.getData(url, search, arrSort);
         },
         async getData (url, search, arrSort){
-            let isSearch = false;
-            if(search.term || search.order &&
+
+            if((search.term || search.order) &&
                 (search.term !== this.contents.term || search.order !== this.contents.order)){
+                console.log('zerei')
                 this.data = []
             }
             await axios
                 .get(url)
                 .then((res) => {
-                    this.data.push((!isSearch) ? res.data : res.data['items']);
+                    this.data.push((!search.isSearch) ? res.data : res.data['items']);
 
-                    let urlTestNextPage = 'https://api.github.com/users/kelver/repos?per_page=6&page=' +
-                        (parseInt(search.page)+1) + arrSort[search.order];
+                    let newUrl = new URL(url);
+                    var search_params = newUrl.searchParams;
+                    search_params.set('page', search.page+1);
+                    newUrl.search = search_params.toString()
 
-                    this.getNextData(urlTestNextPage, search);
+                    this.getNextData(newUrl.toString(), search);
                 })
                 .catch((error) => {
                     console.log(error);
@@ -96,7 +102,8 @@ export default {
             await axios
                 .get(urlTestNextPage)
                 .then((res) => {
-                    this.nextPage = (res.data.length > 0) ? parseInt(search.page)+1 : 1;
+                    let data = (!search.isSearch) ? res.data : res.data['items']
+                    this.nextPage = (data.length > 0) ? parseInt(search.page)+1 : 1;
 
                     this.contents = {
                         term: search.term,
